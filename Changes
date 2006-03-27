@@ -1,0 +1,10 @@
+$Id: Changes,v 1.3 2006/03/27 19:30:17 joern Exp $
+
+Revision history and release notes for Event::ExecFlow:
+
+0.60 Mon Mar 27, 2006, joern
+    Notes:
+    - First public CPAN release
+    - API may change but should by fairly stable
+    - Documentation is mainly missing yet, only PODs with
+      SYNPOSIS and stub chapters.
