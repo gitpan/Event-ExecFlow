@@ -2,6 +2,8 @@ package Event::ExecFlow::Scheduler;
 
 use strict;
 
+sub is_exclusive { 0 }
+
 sub schedule_job { die ref(shift)." missing schedule_job() implementation" }
 sub job_finished { die ref(shift)." missing job_finished() implementation" }
 

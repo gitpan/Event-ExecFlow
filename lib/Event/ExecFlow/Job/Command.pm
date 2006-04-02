@@ -91,6 +91,12 @@ sub open_pipe {
 
     my $command = $self->get_command;
 
+    if ( ref $command eq 'CODE' ) {
+        $Event::ExecFlow::JOB = $self;
+        $command = $command->($self);
+        $Event::ExecFlow::JOB = undef;
+    }
+
     if ( $self->get_configure_callback ) {
         my $cb = $self->get_configure_callback;
         $command = &$cb($command);
@@ -245,7 +251,9 @@ sub backup_state {
     delete $data_href->{node};
     delete $data_href->{watcher};
     delete $data_href->{fh};
-    
+    delete $data_href->{command}
+        if ref $data_href->{command} eq 'CODE';
+
     return $data_href;
 }
 

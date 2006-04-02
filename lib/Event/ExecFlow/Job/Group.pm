@@ -105,6 +105,7 @@ sub init {
     my $self = shift;
 
     $self->SUPER::init();
+
     foreach my $job ( @{$self->get_jobs} ) {
         $job->set_group($self);
         weaken($job->{group});
@@ -170,6 +171,24 @@ sub init_progress_state {
 
     $self->set_state("finished")
         if $self->get_progress_cnt == $self->get_progress_max;
+
+    1;
+}
+
+sub set_group_in_all_childs {
+    my $self = shift;
+
+    foreach my $job ( @{$self->get_jobs} ) {
+        if ( $job->get_type eq 'group' ) {
+            $job->set_group($self);
+            weaken($job->{group});
+            $job->set_group_in_all_childs;
+        }
+        else {
+            $job->set_group($self);
+            weaken($job->{group});
+        }
+    }
 
     1;
 }
@@ -288,26 +307,43 @@ sub get_job_by_name {
 
 sub execute {
     my $self = shift;
+    my %par = @_;
+    my ($skip) = $par{'skip'};
+    
+    $skip = "" if ! defined $skip;
 
+    my $blocked_job;
     while ( 1 ) {
         if (      $self->get_cancelled
              ||   $self->all_jobs_finished
              || ( $self->get_error_message &&
                   $self->get_stop_on_failure ) ) {
             $self->execution_finished;
+            if ( $self->get_scheduler &&
+                 $self->get_scheduler->is_exclusive ) {
+                $self->get_scheduler->run;
+            }
             return;
         }
 
-        my $job = $self->get_next_job;
+        return if $self->get_scheduler &&
+                  $self->get_scheduler->is_exclusive;
+    
+        my $job = $self->get_next_job(blocked=>$blocked_job);
+        next if defined $job && "$job" eq "$skip";
+
         if ( !$job ) {
-            $self->try_reschedule_jobs;
+            $self->try_reschedule_jobs(skip => $skip);
             last;
         }
 
         if ( $self->get_scheduler ) {
             my $state = $self->get_scheduler->schedule_job($job);
             return if $state eq 'sched-blocked';
-            next   if $state eq 'job-blocked';
+            if ( $state eq 'job-blocked' ) {
+                $blocked_job = $job;
+                next;
+            }
             die "Illegal scheduler state '$state'"
                 unless $state eq 'ok';
         }
@@ -318,6 +354,32 @@ sub execute {
     }
     
     1;    
+}
+
+sub try_reschedule_jobs {
+    my $self = shift;
+    my %par = @_;
+    my ($skip) = $par{'skip'};
+
+    my $executed = 0;
+    foreach my $job ( @{$self->get_jobs} ) {
+        next if "$job" eq "$skip";
+
+        # Parallel execution groups which are running now
+        # probably can execute more job, so give it a try.
+        if ( $job->get_type  eq 'group'   &&
+             $job->get_state eq 'running' &&
+             $job->get_parallel ) {
+            $job->execute;
+            $executed = 1;
+        }
+    }
+    
+    if ( !$executed && $self->get_group ) {
+        $self->get_group->execute(skip => $self);
+    }
+    
+    1;
 }
 
 sub cancel {
@@ -351,10 +413,6 @@ return;
     $job->get_post_callbacks->add( sub {
         my ($job) = @_;
         $self->child_job_finished($job);
-        if ( $self->get_scheduler ) {
-            $self->get_scheduler->job_finished($job);
-        }
-        $self->execute;
         1;
     });
 
@@ -391,6 +449,12 @@ sub child_job_finished {
         }
     }
 
+    if ( $self->get_scheduler ) {
+        $self->get_scheduler->job_finished($job);
+    }
+
+    $self->execute;
+
     1;
 }
 
@@ -403,7 +467,8 @@ sub add_job_error_message {
     $error_message .=
         "Job '".$job->get_info."' ".
         "failed with error message:\n".
-        $job->get_error_message."\n";
+        $job->get_error_message."\n".
+        ("-"x80)."\n";
 
     $self->set_error_message($error_message);
 
@@ -417,9 +482,14 @@ sub get_first_job {
 
 sub get_next_job {
     my $self = shift;
+    my %par = @_;
+    my ($blocked) = $par{'blocked'};
+
+    $blocked = "" if ! defined $blocked;
 
     my $next_job;    
     foreach my $job ( @{$self->get_jobs} ) {
+        next if defined $job && "$job" eq "$blocked";
         $Event::ExecFlow::DEBUG && print "Group(".$self->get_info.")->get_next_job: check ".$job->get_info."=>".$job->get_state."\n";
         if ( $job->get_state eq 'waiting' &&
              $self->dependencies_ok($job) ) {
@@ -432,22 +502,6 @@ sub get_next_job {
         ($next_job ? $next_job->get_info : "NOJOB")."\n";
     
     return $next_job;
-}
-
-sub try_reschedule_jobs {
-    my $self = shift;
-
-    foreach my $job ( @{$self->get_jobs} ) {
-        # Parallel execution groups which are running now
-        # probably can execute more job, so give it a try.
-        if ( $job->get_type  eq 'group'   &&
-             $job->get_state eq 'running' &&
-             $job->get_parallel ) {
-            $job->execute;
-        }
-    }
-    
-    1;
 }
 
 sub dependencies_ok {
@@ -524,6 +578,48 @@ sub restore_state {
     $self->set_jobs($jobs);
 
     1;
+}
+
+sub add_stash_to_all_jobs {
+    my $self = shift;
+    my ($add_stash) = @_;
+
+    $self->add_stash($add_stash);
+    
+    foreach my $job ( @{$self->get_jobs} ) {
+        if ( $job->get_type eq 'group' ) {
+            $job->add_stash_to_all_jobs($add_stash);
+        }
+        else {
+            $job->add_stash($add_stash);
+        }
+    }
+}
+
+sub traverse_all_jobs {
+    my $self = shift;
+    my ($code) = @_;
+
+    foreach my $job ( @{$self->get_jobs} ) {
+        $code->($job);
+        if ( $job->get_type eq 'group' ) {
+            $job->traverse_all_jobs($code);
+        }
+    }
+
+    1;    
+}
+
+sub get_job_with_id {
+    my $self = shift;
+    my ($job_id) = @_;
+    
+    my $job;
+    $self->traverse_all_jobs(sub{
+        $job = $_[0] if $_[0]->get_id eq $job_id;
+    });
+
+    return $job;
 }
 
 1;

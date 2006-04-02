@@ -138,6 +138,8 @@ sub new {
         group                   => undef,
     }, $class;
     
+    $self->set_depends_on($depends_on);
+    
     return $self;
 }
 
@@ -352,9 +354,11 @@ sub get_progress_stats {
     if ( $int_percent > $self->get_last_percent_logged + 10 ) {
         $int_percent = int( $int_percent / 10 ) * 10;
         $self->set_last_percent_logged($int_percent);
-        $self->log( $self->get_info . ": "
-                . __x( "{percent}\% done.",
-                percent => $int_percent ) );
+        my $line = $self->get_info . ": "
+                . __x( "{percent}PERCENT done.",
+                percent => $int_percent );
+        $line =~ s/PERCENT/%/;
+        $self->log($line);
     }
 
     $cancelled = " ".$cancelled if $cancelled;
@@ -464,6 +468,26 @@ sub restore_state {
         if $self->get_state eq 'running';
     
     1;
+}
+
+sub add_stash {
+    my $self = shift;
+    my ($add_stash) = @_;
+    
+    my $stash = $self->get_stash;
+    
+    while ( my ($k, $v) = each %{$add_stash} ) {
+        $stash->{$k} = $v;
+    }
+    
+    1;
+}
+
+sub get_job_with_id {
+    my $self = shift;
+    my ($job_id) = @_;
+    return $self if $job_id eq $self->get_id;
+    return;
 }
 
 1;
