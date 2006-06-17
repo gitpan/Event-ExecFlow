@@ -244,6 +244,8 @@ sub execution_finished {
 
     $self->get_post_callbacks->execute($self);
 
+    $self->set_state("error") if $self->get_error_message;
+
     $self->get_frontend->report_job_finished($self);
 
     if ( !$self->get_cancelled ) {

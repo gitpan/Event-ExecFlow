@@ -1,6 +1,6 @@
 package Event::ExecFlow;
 
-$VERSION = "0.61";
+$VERSION = "0.62";
 
 sub import {
     my $class = shift;
@@ -32,7 +32,7 @@ Event::ExecFlow - High level API for event-based execution flow control
 
 =head1 NOTE
 
-This is a first CPAN release with nearly no documentation yet.
+This is release has nearly no documentation yet.
 If you're interested in the details please contact the author.
 
 =head1 ABSTRACT

@@ -125,6 +125,9 @@ sub open_pipe {
 	close STDERR;
 	open (STDERR, ">&STDOUT")
 		or die "can't dup STDOUT to STDERR";
+        # force C locale for the executed program
+        $ENV{LC_ALL} = "C";
+        $ENV{LANG}   = "C";
 	exec ($command)
 		or die "can't exec program: $!";
     }

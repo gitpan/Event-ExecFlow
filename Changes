@@ -1,6 +1,15 @@
-$Id: Changes,v 1.4 2006/04/02 21:32:53 joern Exp $
+$Id: Changes,v 1.5 2006/06/17 13:09:30 joern Exp $
 
 Revision history and release notes for Event::ExecFlow:
+
+0.62 Sat Juin 17, joern
+    Features:
+    - Executed programs are now set into C locale, so parsing
+      output is independent from the locale settings.
+    
+    Bugfix:
+    - set job into error state if post callbacks return
+      with error.
 
 0.61 Sun Apr 2, 2006, joern
     Notes:

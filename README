@@ -2,8 +2,8 @@ NAME
     Event::ExecFlow - High level API for event-based execution flow control
 
 NOTE
-    This is a first CPAN release with nearly no documentation yet. If you're
-    interested in the details please contact the author.
+    This is release has nearly no documentation yet. If you're interested in
+    the details please contact the author.
 
 ABSTRACT
     Event::ExecFlow provides a ligh level API for defining complex flow
