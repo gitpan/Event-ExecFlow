@@ -399,6 +399,22 @@ sub pause_job {
     1;
 }
 
+sub reset {
+    my $self = shift;
+    
+    foreach my $job ( @{$self->get_jobs} ) {
+        if ( $job->reset ) {
+            $self->decrease_progress_cnt($job->get_job_cnt);
+        }
+    }
+    
+    $self->get_frontend->report_job_progress($self);
+
+    return $self->SUPER::reset() if $self->get_progress_cnt == 0;
+
+    0;
+}
+
 sub add_child_post_callback {
     my $self = shift;
     my ($job) = @_;
@@ -522,6 +538,7 @@ sub all_jobs_finished {
 
     foreach my $job ( @{$self->get_jobs} ) {
         return 0 if $job->get_state eq 'waiting' ||
+                    $job->get_state eq 'error' ||
                     $job->get_state eq 'running';
     }
     

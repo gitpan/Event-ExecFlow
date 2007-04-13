@@ -198,6 +198,26 @@ sub start {
     1;
 }
 
+sub reset {
+    my $self = shift;
+    
+    return if $self->get_state eq 'running' or
+              $self->get_state eq 'waiting';
+    
+    $self->set_state("waiting");
+    $self->set_progress_start_time();
+    $self->set_progress_end_time();
+    $self->set_cancelled();
+    $self->set_error_message();
+    $self->set_last_percent_logged(0);
+    $self->set_last_progress();
+    $self->set_progress_cnt(0);
+    
+    $self->get_frontend->report_job_progress($self);
+
+    1;
+}
+
 sub cancel {
     die "Missing implementation for method cancel() of object ".shift;
 }
@@ -260,7 +280,7 @@ sub execution_finished {
         }
     }
 
-    if ( $self->get_type ne 'group' ) {
+    if ( $self->get_type ne 'group' and $self->get_state eq 'finished' ) {
         my $parent = $self;
         while ( $parent = $parent->get_group ) {
             $parent->set_progress_cnt($parent->get_progress_cnt+1);

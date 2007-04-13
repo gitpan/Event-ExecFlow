@@ -1,8 +1,21 @@
-$Id: Changes,v 1.5 2006/06/17 13:09:30 joern Exp $
+$Id: Changes,v 1.6 2007/04/13 19:36:54 joern Exp $
 
 Revision history and release notes for Event::ExecFlow:
 
-0.62 Sat Juin 17, joern
+0.63 Fri Apr 13, 2007, joern
+    Features:
+    - Improved output layout of Event::ExecFlow::Term.
+    - Event::ExecFlow::Frontend::Term->set_quiet(1)
+      will print just warning and error messages.
+    - Added method Event::ExecFlow::Job->reset()
+    
+    Bugfixes:
+    - Increase group progress on child finish only when
+      it was successful.
+    - Group considered itself finished even when a child
+      job didn't finish successfully (cancelled or error).
+    
+0.62 Sat Jun 17, 2006, joern
     Features:
     - Executed programs are now set into C locale, so parsing
       output is independent from the locale settings.

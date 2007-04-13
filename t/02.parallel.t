@@ -42,8 +42,9 @@ sub run_test {
         scheduler   => $scheduler,
     );
 
-    Event::ExecFlow::Frontend::Term->new
-                                   ->start_job($job);
+    my $frontend = Event::ExecFlow::Frontend::Term->new;
+    $frontend->set_quiet(1);
+    $frontend->start_job($job);
 
     ok($code_was_executed, "Job succesfully finished");
 }

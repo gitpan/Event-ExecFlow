@@ -1,6 +1,6 @@
 package Event::ExecFlow;
 
-$VERSION = "0.62";
+$VERSION = "0.63";
 
 sub import {
     my $class = shift;
