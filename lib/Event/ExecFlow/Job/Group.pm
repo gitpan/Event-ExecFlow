@@ -462,6 +462,7 @@ sub child_job_finished {
         if  ( $self->get_fail_with_members ) {
             $self->set_state("error");
             $self->add_job_error_message($job);
+            $self->get_frontend->report_job_error($self);
         }
     }
 

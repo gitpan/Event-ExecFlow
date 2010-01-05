@@ -1,7 +1,14 @@
-$Id: Changes,v 1.6 2007/04/13 19:36:54 joern Exp $
+$Id: Changes,v 1.7 2009-12-19 11:47:38 joern Exp $
 
 Revision history and release notes for Event::ExecFlow:
 
+0.64 Sat Dec 19, 2009, joern
+    Bugfixes:
+    - Accumulated group member errors were not reported to
+      the frontend.
+    - Use Perl's builtin command execution with a subshell
+      instead of forking.
+    
 0.63 Fri Apr 13, 2007, joern
     Features:
     - Improved output layout of Event::ExecFlow::Term.
@@ -28,9 +35,9 @@ Revision history and release notes for Event::ExecFlow:
     Notes:
     - added some helper methods to the Group class
     - scheduler stuff is still work in progress and needs some cleanup
-    - shell commands maybe closures returing the shell code at runtime
+    - shell commands maybe closures returning the shell code at runtime
     - fixed a bug with depends_on argument to constructor not
-      processed correctly"
+      processed correctly
 
 0.60 Mon Mar 27, 2006, joern
     Notes:

@@ -55,7 +55,7 @@ SYNOPSIS
       #-- this inherits from Event::ExecFlow::Frontend
       my $frontend = Video::DVDRip::GUI::ExecFlow->new(...);
       $frontend->start_job($job);
-  
+
 DESCRIPTION
     Event::ExecFlow offers a high level API to declare jobs, which mainly
     execute external commands, parse their output to get progress or other

@@ -117,20 +117,11 @@ sub open_pipe {
 
     $self->set_executed_command($command);
 
-    my $pid = open(my $fh, "-|");
-    die "can't fork child process" if not defined $pid;
+    local $ENV{LC_ALL} = "C";
+    local $ENV{LANG}   = "C";
 
-    if ( not $pid ) {
-	# child
-	close STDERR;
-	open (STDERR, ">&STDOUT")
-		or die "can't dup STDOUT to STDERR";
-        # force C locale for the executed program
-        $ENV{LC_ALL} = "C";
-        $ENV{LANG}   = "C";
-	exec ($command)
-		or die "can't exec program: $!";
-    }
+    my $pid = open (my $fh, "( $command ) 2>&1 |")
+        or die "can't fork '$command'";
 
     my $watcher = AnyEvent->io ( fh => $fh, poll => 'r', cb => sub {
         $self->command_progress;
